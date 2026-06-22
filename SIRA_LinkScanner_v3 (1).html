@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIRA · Universal Link Scanner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+
+[data-theme="light"]{
+  --bg:#f0f4fa;
+  --surface:#ffffff;
+  --surface2:#f8fafc;
+  --border:#e2e8f0;
+  --text:#0f172a;
+  --text2:#475569;
+  --text3:#94a3b8;
+  --primary:#1e3a8a;
+  --primary-glow:rgba(30,58,138,0.12);
+  --accent:#10b981;
+  --accent-glow:rgba(16,185,129,0.15);
+  --danger:#ef4444;
+  --warning:#f59e0b;
+  --safe:#10b981;
+  --bar-bg:#1e293b;
+  --card-shadow:0 1px 3px rgba(0,0,0,0.07),0 8px 24px rgba(0,0,0,0.06);
+  --scan-shadow:0 2px 8px rgba(30,58,138,0.18);
+}
+[data-theme="dark"]{
+  --bg:#0b1120;
+  --surface:#131c2e;
+  --surface2:#1a2540;
+  --border:#1e2d47;
+  --text:#e2e8f0;
+  --text2:#94a3b8;
+  --text3:#475569;
+  --primary:#3b82f6;
+  --primary-glow:rgba(59,130,246,0.15);
+  --accent:#10b981;
+  --accent-glow:rgba(16,185,129,0.18);
+  --danger:#f87171;
+  --warning:#fbbf24;
+  --safe:#34d399;
+  --bar-bg:#060d1a;
+  --card-shadow:0 1px 3px rgba(0,0,0,0.4),0 8px 24px rgba(0,0,0,0.3);
+  --scan-shadow:0 2px 8px rgba(59,130,246,0.22);
+}
+
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  transition:background .3s,color .3s;
+}
+
+/* ── TOP BAR ── */
+.topbar{
+  background:var(--bar-bg);
+  padding:9px 0;
+  display:flex;justify-content:center;align-items:center;
+  gap:32px;flex-wrap:wrap;
+  border-bottom:2px solid var(--accent);
+}
+.topbar-item{
+  display:flex;align-items:center;gap:7px;
+  font-size:12px;color:#94a3b8;letter-spacing:.3px;font-weight:500;
+}
+.topbar-pill{
+  background:var(--accent);color:#064e3b;
+  font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px;
+  letter-spacing:.4px;
+}
+.live-dot{
+  width:7px;height:7px;background:var(--accent);border-radius:50%;
+  animation:blink 1.6s ease-in-out infinite;
+}
+@keyframes blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(1.3)}}
+
+/* ── HEADER ── */
+.header{
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  padding:18px 32px;
+  display:flex;justify-content:space-between;align-items:center;
+  flex-wrap:wrap;gap:16px;
+  box-shadow:var(--card-shadow);
+  position:sticky;top:0;z-index:100;
+  transition:background .3s,border-color .3s;
+}
+.logo{display:flex;align-items:center;gap:14px;}
+.logo-icon{
+  width:44px;height:44px;background:var(--primary);border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;flex-shrink:0;
+  box-shadow:var(--scan-shadow);
+}
+.logo-text h1{font-size:20px;font-weight:800;color:var(--text);letter-spacing:-.3px;}
+.logo-text p{font-size:12px;color:var(--text2);margin-top:1px;}
+.header-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.stat-pill{
+  display:flex;align-items:center;gap:7px;
+  background:var(--surface2);border:1px solid var(--border);
+  padding:7px 14px;border-radius:30px;font-size:12px;font-weight:500;
+  color:var(--text2);
+}
+.stat-pill strong{color:var(--text);font-weight:700;}
+.theme-btn{
+  background:var(--surface2);border:1px solid var(--border);
+  padding:8px 14px;border-radius:30px;cursor:pointer;
+  font-size:18px;line-height:1;transition:.2s;color:var(--text);
+  display:flex;align-items:center;
+}
+.theme-btn:hover{background:var(--primary);border-color:var(--primary);color:white;}
+
+/* ── MAIN ── */
+.main{
+  width:100%;
+  padding:24px 24px 40px;
+  flex:1;display:flex;flex-direction:column;gap:22px;
+}
+
+/* ── SCANNER CARD ── */
+.scanner-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:28px;
+  box-shadow:var(--card-shadow);
+}
+.scanner-head{
+  display:flex;justify-content:space-between;align-items:center;
+  flex-wrap:wrap;gap:12px;margin-bottom:22px;
+}
+.scanner-head h2{font-size:18px;font-weight:700;display:flex;align-items:center;gap:10px;color:var(--text);}
+.scanner-modes{display:flex;gap:6px;flex-wrap:wrap;}
+.mode-chip{
+  padding:6px 16px;border-radius:30px;border:1px solid var(--border);
+  font-size:12px;font-weight:600;cursor:pointer;
+  background:var(--surface2);color:var(--text2);
+  transition:.2s;
+}
+.mode-chip.active,.mode-chip:hover{background:var(--primary);color:white;border-color:var(--primary);}
+
+.input-box{
+  background:var(--surface2);border:2px solid var(--border);
+  border-radius:16px;padding:6px;
+  transition:.25s;margin-bottom:16px;
+}
+.input-box:focus-within{border-color:var(--primary);box-shadow:0 0 0 5px var(--primary-glow);}
+.input-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.input-icon{padding:0 14px;font-size:20px;color:var(--text3);flex-shrink:0;}
+.url-input{
+  flex:1;min-width:180px;padding:16px 8px;border:none;
+  background:transparent;font-size:15px;color:var(--text);outline:none;
+  font-family:'Inter',sans-serif;
+}
+.url-input::placeholder{color:var(--text3);}
+.btn-scan{
+  background:var(--primary);color:white;border:none;
+  padding:14px 28px;border-radius:12px;font-size:15px;font-weight:700;
+  cursor:pointer;transition:.25s;display:flex;align-items:center;gap:10px;
+  white-space:nowrap;box-shadow:var(--scan-shadow);
+  flex-shrink:0;
+}
+.btn-scan:hover{filter:brightness(1.12);transform:translateY(-1px);}
+.btn-scan:active{transform:scale(.98);}
+.btn-reset{
+  background:var(--surface2);color:var(--text2);border:1px solid var(--border);
+  padding:14px 20px;border-radius:12px;font-size:14px;font-weight:600;
+  cursor:pointer;transition:.2s;
+}
+.btn-reset:hover{background:var(--border);}
+
+.samples{
+  display:flex;gap:10px;flex-wrap:wrap;padding-top:16px;
+  border-top:1px solid var(--border);
+  align-items:center;
+}
+.samples-label{font-size:12px;color:var(--text3);font-weight:600;letter-spacing:.3px;}
+.sample-chip{
+  display:flex;align-items:center;gap:6px;
+  background:var(--surface2);border:1px solid var(--border);
+  padding:7px 16px;border-radius:30px;font-size:12px;font-weight:500;
+  cursor:pointer;transition:.2s;color:var(--text2);
+}
+.sample-chip:hover{background:var(--primary);color:white;border-color:var(--primary);}
+.sample-chip.danger:hover{background:var(--danger);border-color:var(--danger);}
+
+/* ── PROGRESS SCANNER ── */
+.scan-progress{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:28px;box-shadow:var(--card-shadow);
+  display:none;
+}
+.progress-title{font-size:16px;font-weight:700;margin-bottom:20px;color:var(--text);}
+.progress-steps{display:flex;flex-direction:column;gap:12px;}
+.step-row{
+  display:flex;align-items:center;gap:14px;
+  padding:12px 16px;border-radius:12px;background:var(--surface2);
+  border:1px solid var(--border);transition:.3s;
+}
+.step-row.active{border-color:var(--primary);background:var(--primary-glow);}
+.step-row.done{border-color:var(--accent);background:var(--accent-glow);}
+.step-icon{
+  width:32px;height:32px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;flex-shrink:0;
+  background:var(--border);color:var(--text2);
+  transition:.3s;
+}
+.step-row.active .step-icon{background:var(--primary);color:white;animation:pulse-icon .8s ease-in-out infinite alternate;}
+.step-row.done .step-icon{background:var(--accent);color:white;}
+@keyframes pulse-icon{from{transform:scale(1)}to{transform:scale(1.1)}}
+.step-label{font-size:13px;font-weight:600;color:var(--text);}
+.step-sub{font-size:11px;color:var(--text3);margin-top:1px;}
+.step-status{margin-left:auto;font-size:11px;font-weight:700;color:var(--text3);}
+.step-row.done .step-status{color:var(--accent);}
+.step-row.active .step-status{color:var(--primary);}
+.overall-bar{margin-top:22px;}
+.bar-label{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:8px;}
+.bar-track{height:8px;background:var(--border);border-radius:8px;overflow:hidden;}
+.bar-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:8px;transition:width .4s ease;}
+
+/* ── RESULTS ── */
+.results-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:28px;
+  box-shadow:var(--card-shadow);display:none;
+}
+.results-head{
+  display:flex;justify-content:space-between;align-items:center;
+  flex-wrap:wrap;gap:14px;
+  padding-bottom:22px;margin-bottom:22px;
+  border-bottom:1px solid var(--border);
+}
+.results-head h2{font-size:18px;font-weight:700;color:var(--text);}
+.verdict{
+  padding:10px 24px;border-radius:30px;
+  font-weight:800;font-size:16px;letter-spacing:.3px;
+}
+.verdict.LOW{background:#d1fae5;color:#065f46;}
+.verdict.MEDIUM{background:#fef3c7;color:#78350f;}
+.verdict.HIGH{background:#fee2e2;color:#7f1d1d;}
+.verdict.CRITICAL{background:#7f1d1d;color:white;}
+
+[data-theme="dark"] .verdict.LOW{background:#064e3b;color:#6ee7b7;}
+[data-theme="dark"] .verdict.MEDIUM{background:#451a03;color:#fcd34d;}
+[data-theme="dark"] .verdict.HIGH{background:#450a0a;color:#fca5a5;}
+[data-theme="dark"] .verdict.CRITICAL{background:#450a0a;color:#fca5a5;}
+
+.score-block{
+  background:var(--surface2);border-radius:16px;padding:20px 22px;margin-bottom:20px;
+}
+.score-head{display:flex;justify-content:space-between;margin-bottom:10px;}
+.score-label{font-size:13px;color:var(--text2);font-weight:600;}
+.score-num{font-size:28px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--text);}
+.score-track{height:10px;background:var(--border);border-radius:8px;overflow:hidden;}
+.score-fill{height:100%;width:0%;border-radius:8px;transition:width .8s cubic-bezier(.23,1,.32,1);}
+.score-fill.low{background:var(--accent);}
+.score-fill.medium{background:var(--warning);}
+.score-fill.high,.score-fill.critical{background:var(--danger);}
+
+.details-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:12px;margin-bottom:20px;
+}
+.detail-box{
+  background:var(--surface2);border-radius:14px;padding:14px 16px;
+  border:1px solid var(--border);
+}
+.detail-box .d-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;}
+.detail-box .d-val{font-size:14px;font-weight:600;color:var(--text);word-break:break-all;font-family:'JetBrains Mono',monospace;}
+
+.checks-section{margin-bottom:20px;}
+.checks-section h3{font-size:14px;font-weight:700;margin-bottom:12px;color:var(--text);}
+.check-item{
+  display:flex;align-items:center;gap:12px;
+  padding:11px 14px;border-radius:12px;
+  margin-bottom:6px;background:var(--surface2);
+  border-left:3px solid transparent;
+}
+.check-item.pass{border-color:var(--accent);}
+.check-item.warn{border-color:var(--warning);}
+.check-item.fail{border-color:var(--danger);}
+.check-dot{
+  width:26px;height:26px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;
+}
+.check-dot.pass{background:#d1fae5;color:#065f46;}
+.check-dot.warn{background:#fef3c7;color:#78350f;}
+.check-dot.fail{background:#fee2e2;color:#7f1d1d;}
+[data-theme="dark"] .check-dot.pass{background:#064e3b;color:#6ee7b7;}
+[data-theme="dark"] .check-dot.warn{background:#451a03;color:#fcd34d;}
+[data-theme="dark"] .check-dot.fail{background:#450a0a;color:#fca5a5;}
+.check-name{font-size:13px;font-weight:600;color:var(--text);}
+.check-msg{font-size:11px;color:var(--text2);}
+
+.threats-block{
+  border-radius:14px;padding:16px 18px;margin-bottom:14px;
+}
+.threats-block.critical{background:#fee2e2;border:1px solid #fca5a5;}
+.threats-block.warning{background:#fef3c7;border:1px solid #fcd34d;}
+.threats-block.info{background:#dbeafe;border:1px solid #93c5fd;}
+[data-theme="dark"] .threats-block.critical{background:#450a0a;border-color:#7f1d1d;}
+[data-theme="dark"] .threats-block.warning{background:#451a03;border-color:#78350f;}
+[data-theme="dark"] .threats-block.info{background:#1e3a8a;border-color:#1d4ed8;}
+.threats-block h4{font-size:13px;font-weight:700;margin-bottom:8px;color:var(--text);}
+.threats-block ul{list-style:none;display:flex;flex-direction:column;gap:4px;}
+.threats-block ul li{font-size:13px;color:var(--text2);}
+
+.recs-block{
+  background:var(--surface2);border-radius:14px;padding:16px 18px;margin-bottom:20px;
+}
+.recs-block h4{font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text);}
+.recs-block ul{list-style:none;display:flex;flex-direction:column;gap:6px;}
+.recs-block ul li{font-size:13px;color:var(--text2);}
+
+.export-bar{
+  display:flex;gap:10px;flex-wrap:wrap;
+  padding-top:18px;border-top:1px solid var(--border);
+}
+.exp-btn{
+  padding:9px 20px;border-radius:30px;border:1px solid var(--border);
+  background:var(--surface2);font-size:13px;font-weight:600;
+  cursor:pointer;transition:.2s;color:var(--text2);display:flex;align-items:center;gap:7px;
+}
+.exp-btn:hover{background:var(--primary);color:white;border-color:var(--primary);}
+.exp-btn.danger:hover{background:var(--danger);border-color:var(--danger);}
+
+/* ── TABS ── */
+.tabs-row{
+  display:flex;gap:6px;flex-wrap:wrap;
+  border-bottom:1px solid var(--border);padding-bottom:8px;
+}
+.tab-btn{
+  padding:9px 20px;border-radius:30px;font-size:13px;font-weight:600;
+  cursor:pointer;transition:.2s;border:1px solid transparent;
+  background:none;color:var(--text2);
+}
+.tab-btn:hover{background:var(--surface2);}
+.tab-btn.active{background:var(--primary);color:white;border-color:var(--primary);}
+.tab-pane{display:none;}
+.tab-pane.active{display:block;}
+
+/* ── ACTIVITY LOG ── */
+.activity-wrap{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:20px;padding:22px;max-height:360px;overflow-y:auto;
+}
+.log-row{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;
+}
+.log-row:last-child{border-bottom:none;}
+.log-time{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text3);min-width:70px;}
+.log-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.log-dot.LOW{background:var(--accent);}
+.log-dot.HIGH,.log-dot.CRITICAL{background:var(--danger);}
+.log-dot.MEDIUM{background:var(--warning);}
+.log-dot.info{background:var(--text3);}
+.log-link{flex:1;color:var(--text);truncate:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.log-badge{
+  font-size:10px;font-weight:700;padding:2px 10px;border-radius:20px;flex-shrink:0;
+  letter-spacing:.3px;
+}
+.log-badge.LOW{background:#d1fae5;color:#065f46;}
+.log-badge.MEDIUM{background:#fef3c7;color:#78350f;}
+.log-badge.HIGH,.log-badge.CRITICAL{background:#fee2e2;color:#7f1d1d;}
+.log-badge.info{background:var(--surface2);color:var(--text2);}
+[data-theme="dark"] .log-badge.LOW{background:#064e3b;color:#6ee7b7;}
+[data-theme="dark"] .log-badge.MEDIUM{background:#451a03;color:#fcd34d;}
+[data-theme="dark"] .log-badge.HIGH,[data-theme="dark"] .log-badge.CRITICAL{background:#450a0a;color:#fca5a5;}
+
+/* ── POLICY TAB ── */
+.policy-card,.report-card,.settings-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:20px;padding:26px;
+}
+.policy-item{
+  display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border);
+}
+.policy-item:last-child{border-bottom:none;}
+.policy-icon{font-size:18px;flex-shrink:0;margin-top:2px;}
+.policy-text strong{font-size:14px;font-weight:700;display:block;margin-bottom:3px;color:var(--text);}
+.policy-text span{font-size:13px;color:var(--text2);}
+
+/* ── REPORTS TAB ── */
+.reports-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+.report-stat{
+  background:var(--surface2);border-radius:14px;padding:18px;
+  border:1px solid var(--border);
+}
+.report-stat h4{font-size:12px;color:var(--text3);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;}
+.threat-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.threat-bar-label{font-size:12px;color:var(--text2);width:80px;flex-shrink:0;}
+.threat-bar-track{flex:1;height:6px;background:var(--border);border-radius:4px;overflow:hidden;}
+.threat-bar-fill{height:100%;border-radius:4px;}
+.threat-bar-count{font-size:12px;font-weight:700;color:var(--text);width:30px;text-align:right;}
+
+/* ── SETTINGS TAB ── */
+.setting-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:16px 0;border-bottom:1px solid var(--border);
+}
+.setting-row:last-child{border-bottom:none;}
+.setting-label strong{font-size:14px;font-weight:600;display:block;color:var(--text);}
+.setting-label span{font-size:12px;color:var(--text2);}
+.toggle{
+  position:relative;width:44px;height:24px;
+  background:var(--border);border-radius:30px;cursor:pointer;
+  transition:.25s;flex-shrink:0;
+}
+.toggle.on{background:var(--accent);}
+.toggle::after{
+  content:'';position:absolute;
+  top:3px;left:3px;width:18px;height:18px;
+  background:white;border-radius:50%;transition:.25s;
+}
+.toggle.on::after{left:23px;}
+
+/* ── COMMENTS TAB ── */
+.comments-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:20px;padding:26px;
+}
+.comment-form-box{
+  background:var(--surface2);border-radius:16px;
+  padding:20px;margin-bottom:24px;
+  border:1px solid var(--border);
+}
+.form-title{font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:16px;}
+.cf-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+@media(max-width:560px){.cf-grid{grid-template-columns:1fr;}}
+.cf-field{display:flex;flex-direction:column;gap:5px;}
+.cf-field label{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;}
+.cf-field input,.cf-field select,.cf-field textarea{
+  padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;
+  font-size:13px;font-family:'Inter',sans-serif;
+  background:var(--surface);color:var(--text);outline:none;transition:.2s;
+}
+.cf-field input:focus,.cf-field select:focus,.cf-field textarea:focus{
+  border-color:var(--primary);box-shadow:0 0 0 4px var(--primary-glow);
+}
+.cf-field textarea{resize:vertical;min-height:80px;}
+.star-row{display:flex;align-items:center;gap:4px;margin-bottom:14px;}
+.star-row label{font-size:12px;font-weight:700;color:var(--text2);margin-right:8px;}
+.star-btn2{background:none;border:none;font-size:24px;cursor:pointer;color:var(--border);transition:.15s;padding:2px;line-height:1;}
+.star-btn2:hover,.star-btn2.lit{color:#f59e0b;transform:scale(1.15);}
+.cf-footer{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+.char-ct{font-size:11px;color:var(--text3);}
+.btn-post{
+  background:var(--primary);color:white;border:none;
+  padding:10px 24px;border-radius:30px;font-size:13px;font-weight:700;
+  cursor:pointer;transition:.2s;display:flex;align-items:center;gap:8px;
+}
+.btn-post:hover{filter:brightness(1.12);transform:translateY(-1px);}
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
+.fchip{
+  padding:6px 16px;border:1px solid var(--border);border-radius:30px;
+  font-size:12px;font-weight:600;cursor:pointer;
+  background:var(--surface2);color:var(--text2);transition:.2s;
+}
+.fchip.active,.fchip:hover{background:var(--primary);color:white;border-color:var(--primary);}
+.comment-list{display:flex;flex-direction:column;gap:14px;}
+.cmt-card{
+  background:var(--surface2);border-radius:16px;padding:18px;
+  border-left:3px solid var(--border);transition:.2s;
+  border-bottom:1px solid var(--border);
+}
+.cmt-card:hover{border-left-color:var(--primary);}
+.cmt-card.pinned{border-left-color:var(--accent);}
+.cmt-top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
+.cmt-author{display:flex;align-items:center;gap:10px;}
+.avatar{
+  width:36px;height:36px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:12px;color:white;flex-shrink:0;
+}
+.auth-name{font-size:14px;font-weight:700;color:var(--text);}
+.auth-role{font-size:11px;color:var(--text3);}
+.cmt-meta{display:flex;align-items:center;gap:8px;}
+.cmt-stars{color:#f59e0b;font-size:12px;letter-spacing:1px;}
+.cmt-time{font-size:11px;color:var(--text3);}
+.pin-tag{background:#d1fae5;color:#065f46;font-size:10px;font-weight:800;padding:2px 9px;border-radius:20px;}
+[data-theme="dark"] .pin-tag{background:#064e3b;color:#6ee7b7;}
+.cmt-text{font-size:13px;color:var(--text2);line-height:1.65;margin-bottom:10px;}
+.cmt-tag{display:inline-block;background:var(--primary-glow);color:var(--primary);font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;margin-right:6px;}
+.cmt-actions{display:flex;gap:10px;margin-top:10px;}
+.act-btn{
+  background:none;border:1px solid var(--border);color:var(--text2);
+  font-size:12px;cursor:pointer;padding:5px 12px;border-radius:20px;
+  transition:.15s;display:flex;align-items:center;gap:5px;
+}
+.act-btn:hover{background:var(--surface);border-color:var(--primary);color:var(--primary);}
+.act-btn.liked{color:var(--danger);border-color:var(--danger);}
+.empty-state{text-align:center;padding:40px;color:var(--text3);}
+.empty-state .big{font-size:40px;margin-bottom:10px;}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:28px;right:28px;
+  background:var(--surface);border:1px solid var(--border);
+  color:var(--text);padding:14px 22px;border-radius:14px;
+  font-size:13px;font-weight:600;
+  display:flex;align-items:center;gap:10px;z-index:9999;
+  transform:translateY(80px);opacity:0;
+  transition:all .35s cubic-bezier(.34,1.56,.64,1);
+  box-shadow:0 8px 30px rgba(0,0,0,.15);
+}
+.toast.show{transform:translateY(0);opacity:1;}
+
+/* ── MOBILE ── */
+@media(max-width:700px){
+  .header{padding:14px 16px;}
+  .main{padding:12px 12px 32px;}
+  .scanner-card,.results-card,.scan-progress{padding:16px;}
+  .cf-grid{grid-template-columns:1fr;}
+  .reports-grid{grid-template-columns:1fr;}
+  .input-row{flex-direction:column;align-items:stretch;}
+  .btn-scan,.btn-reset{width:100%;justify-content:center;}
+  .topbar{gap:12px 24px;padding:8px 16px;}
+}
+
+.section-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;font-weight:700;margin-bottom:10px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-item"><span class="live-dot"></span> LIVE THREAT INTELLIGENCE</div>
+  <div class="topbar-item"><span class="topbar-pill">ENTERPRISE</span> SIRA UNIVERSAL LINK SCANNER</div>
+  <div class="topbar-item">🛡️ ZERO-TRUST · SOC2 · ISO27001</div>
+</div>
+
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon">🛡️</div>
+    <div class="logo-text">
+      <h1>SIRA Link Scanner</h1>
+      <p>Deep security analysis for any link · Enterprise Grade</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <button class="theme-btn" onclick="toggleTheme()" title="Toggle dark mode">🌙</button>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- Scanner -->
+  <div class="scanner-card">
+    <div class="scanner-head">
+      <h2>🔍 Universal Link Scanner</h2>
+      <div class="scanner-modes">
+        <div class="mode-chip active" onclick="setMode(this,'deep')">⚡ Deep Scan</div>
+        <div class="mode-chip" onclick="setMode(this,'quick')">⚡ Quick</div>
+        <div class="mode-chip" onclick="setMode(this,'api')">🔗 API Mode</div>
+      </div>
+    </div>
+    <div class="input-box">
+      <div class="input-row">
+        <span class="input-icon">🔗</span>
+        <input class="url-input" id="urlInput" type="text"
+          placeholder="Paste any link — meeting, document, share, short URL…"
+          value="https://sira-internal.sharepoint.com/teams/security"
+          onkeydown="if(event.key==='Enter')scanLink()">
+        <button class="btn-scan" onclick="scanLink()">⚡ Scan Link</button>
+        <button class="btn-reset" onclick="resetScanner()">✕ Reset</button>
+      </div>
+    </div>
+    <div class="samples">
+      <span class="samples-label">QUICK TEST:</span>
+      <span class="sample-chip" onclick="loadSample('sharepoint')">📁 SharePoint</span>
+      <span class="sample-chip" onclick="loadSample('zoom')">📹 Zoom</span>
+      <span class="sample-chip" onclick="loadSample('dropbox')">📦 Dropbox</span>
+      <span class="sample-chip danger" onclick="loadSample('phishing')">⚠️ Phishing</span>
+      <span class="sample-chip danger" onclick="loadSample('malicious')">🚨 Malware</span>
+      <span class="sample-chip danger" onclick="loadSample('short')">🔗 Short URL</span>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="scan-progress" id="scanProgress">
+    <div class="progress-title">🔍 Scanning with SIRA AI — 50+ threat feeds</div>
+    <div class="progress-steps" id="progressSteps"></div>
+    <div class="overall-bar">
+      <div class="bar-label"><span>Overall progress</span><span id="progressPct">0%</span></div>
+      <div class="bar-track"><div class="bar-fill" id="progressBar"></div></div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="results-card" id="resultsCard"></div>
+
+  <!-- Tabs -->
+  <div>
+    <div class="tabs-row">
+      <button class="tab-btn active" onclick="switchTab('activity',this)">📋 Activity Log</button>
+      <button class="tab-btn" onclick="switchTab('policy',this)">📜 Security Policy</button>
+      <button class="tab-btn" onclick="switchTab('reports',this)">📊 Reports</button>
+      <button class="tab-btn" onclick="switchTab('settings',this)">⚙️ Settings</button>
+    </div>
+
+    <!-- Activity -->
+    <div class="tab-pane active" id="activityPane">
+      <div class="activity-wrap" id="activityLog">
+        <div class="log-row"><span class="log-time">--:--:--</span><span class="log-dot info"></span><span class="log-link">SIRA scanner initialized</span><span class="log-badge info">SYSTEM</span></div>
+      </div>
+    </div>
+
+    <!-- Policy -->
+    <div class="tab-pane" id="policyPane">
+      <div class="policy-card">
+        <div class="section-label">SIRA Security Policy v3.2</div>
+        <div class="policy-item"><div class="policy-icon">✅</div><div class="policy-text"><strong>Allowed link types</strong><span>All business-related links — meetings, docs, file shares, collaboration tools</span></div></div>
+        <div class="policy-item"><div class="policy-icon">🚫</div><div class="policy-text"><strong>URL shorteners</strong><span>Blocked by default — expanded and full destination verified before marking safe</span></div></div>
+        <div class="policy-item"><div class="policy-icon">🔍</div><div class="policy-text"><strong>External domains</strong><span>Risk-scored against 50+ threat feeds; auto-quarantine for unknown or suspicious domains</span></div></div>
+        <div class="policy-item"><div class="policy-icon">🔒</div><div class="policy-text"><strong>Zero-trust principle</strong><span>All links treated as untrusted until verified. No exceptions, no bypass without CISO approval</span></div></div>
+        <div class="policy-item"><div class="policy-icon">📊</div><div class="policy-text"><strong>Audit &amp; logging</strong><span>All scans logged with timestamp, user, result, and risk score for compliance reporting</span></div></div>
+      </div>
+    </div>
+
+    <!-- Reports -->
+    <div class="tab-pane" id="reportsPane">
+      <div class="report-card">
+        <div class="section-label">Weekly Threat Report</div>
+        <div class="reports-grid">
+          <div class="report-stat">
+            <h4>Top Threats</h4>
+            <div class="threat-bar-row"><span class="threat-bar-label">Phishing</span><div class="threat-bar-track"><div class="threat-bar-fill" style="width:72%;background:var(--danger);"></div></div><span class="threat-bar-count">212</span></div>
+            <div class="threat-bar-row"><span class="threat-bar-label">Suspicious</span><div class="threat-bar-track"><div class="threat-bar-fill" style="width:49%;background:var(--warning);"></div></div><span class="threat-bar-count">144</span></div>
+            <div class="threat-bar-row"><span class="threat-bar-label">Malware</span><div class="threat-bar-track"><div class="threat-bar-fill" style="width:30%;background:#ef4444;"></div></div><span class="threat-bar-count">87</span></div>
+            <div class="threat-bar-row"><span class="threat-bar-label">Short URL</span><div class="threat-bar-track"><div class="threat-bar-fill" style="width:18%;background:var(--text3);"></div></div><span class="threat-bar-count">52</span></div>
+          </div>
+          <div class="report-stat">
+            <h4>Link Types</h4>
+            <div class="threat-bar-row"><span class="threat-bar-label">Meetings</span><div class="threat-bar-track"><div class="threat-bar-fill" style="width:38%;background:var(--primary);"></div></div><span class="threat-bar-count">38%</span></div>
+            <div class="threat-bar-row"><span class="threat-bar-label">File share</span><div class="threat-bar-track"><div class="threat-bar-fill" style="width:34%;background:var(--accent);"></div></div><span class="threat-bar-count">34%</span></div>
+            <div class="threat-bar-row"><span class="threat-bar-label">Other</span><div class="threat-bar-track"><div class="threat-bar-fill" style="width:28%;background:var(--text3);"></div></div><span class="threat-bar-count">28%</span></div>
+          </div>
+        </div>
+        <div class="export-bar">
+          <button class="exp-btn" onclick="exportPDF()">📄 Export PDF</button>
+          <button class="exp-btn" onclick="showToast('✅ CSV exported')">📊 CSV</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div class="tab-pane" id="settingsPane">
+      <div class="settings-card">
+        <div class="section-label">Scanner Configuration</div>
+        <div class="setting-row">
+          <div class="setting-label"><strong>Block URL shorteners</strong><span>Auto-expand and scan bit.ly, tinyurl, etc.</span></div>
+          <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label"><strong>AI threat detection</strong><span>ML-based zero-day phishing classification</span></div>
+          <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label"><strong>Auto-quarantine HIGH risk</strong><span>Immediately block and report HIGH/CRITICAL links</span></div>
+          <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label"><strong>Real-time activity log</strong><span>Log all scans with timestamps for audit</span></div>
+          <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label"><strong>Dark mode</strong><span>Switch to dark theme</span></div>
+          <div class="toggle" id="darkToggle" onclick="toggleTheme();this.classList.toggle('on')"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DB={
+  safe:{
+    'sharepoint.com':{p:'SharePoint'},
+    'onedrive.com':{p:'OneDrive'},
+    'dropbox.com':{p:'Dropbox'},
+    'google.com':{p:'Google'},
+    'zoom.us':{p:'Zoom'},
+    'teams.microsoft.com':{p:'Teams'},
+    'webex.com':{p:'Webex'},
+    'slack.com':{p:'Slack'},
+    'sira-internal.sharepoint.com':{p:'SIRA SharePoint'},
+    'sira.team':{p:'SIRA Team'}
+  },
+  bad:['zoom-meeting.com','zoom-meeting.net','google-meet.com','microsoft-teams.com',
+       'sharepoint-files.com','dropbox-share.com','sira-secure.com','verify-sira.com',
+       'sira-account.com','teams-update.com','webex-meeting.com'],
+  short:['bit.ly','tinyurl.com','goo.gl','ow.ly','tiny.cc','tr.im','is.gd','buff.ly','short.link','cutt.ly','rb.gy','rebrand.ly'],
+  patterns:['verify','account','login','secure','update','confirm','authenticate',
+            'password','credential','billing','payment','invoice','download',
+            'plugin','extension','install','sira-secure','sira-verify']
+};
+
+const samples={
+  sharepoint:'https://sira-internal.sharepoint.com/teams/security/files/2025',
+  zoom:'https://zoom.us/j/987654321?pwd=abcdefgh',
+  dropbox:'https://dropbox.com/s/abc123/meeting-notes.pdf',
+  phishing:'http://sira-secure.com/verify-account/login',
+  malicious:'http://bit.ly/3xYs9Pm',
+  short:'https://tinyurl.com/2k9m4n8'
+};
+
+let actLog=[];
+let sessionScanned=0,sessionThreats=0,sessionWarnings=0,sessionScores=[];
+let lastResult=null;
+let scanMode='deep';
+let curRating=0;
+let commentFilter='All';
+
+const scanStepDefs=[
+  {icon:'🌐',label:'Domain resolution',sub:'Checking DNS & domain reputation'},
+  {icon:'🔍',label:'Threat database',sub:'Scanning against 50+ threat feeds'},
+  {icon:'🔗',label:'URL shortener check',sub:'Expanding & tracing redirects'},
+  {icon:'⚠️',label:'Pattern analysis',sub:'Detecting phishing patterns'},
+  {icon:'🔒',label:'HTTPS validation',sub:'Verifying certificate & protocol'},
+  {icon:'📁',label:'File extension scan',sub:'Checking for executable payloads'},
+  {icon:'🧠',label:'AI classification',sub:'ML threat scoring'},
+  {icon:'📊',label:'Risk scoring',sub:'Calculating final security score'},
+];
+
+function setMode(el,m){
+  document.querySelectorAll('.mode-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');scanMode=m;
+}
+
+function loadSample(t){
+  document.getElementById('urlInput').value=samples[t]||samples.sharepoint;
+  scanLink();
+}
+
+function scanLink(){
+  const raw=document.getElementById('urlInput').value.trim();
+  if(!raw){showToast('⚠️ Please enter a link to scan');return;}
+  if(!raw.startsWith('http://') && !raw.startsWith('https://')){
+    showToast('⚠️ Include protocol: http:// or https://');return;
+  }
+  document.getElementById('resultsCard').style.display='none';
+  runProgressScan(raw);
+}
+
+function runProgressScan(url){
+  const prog=document.getElementById('scanProgress');
+  prog.style.display='block';
+  prog.scrollIntoView({behavior:'smooth',block:'nearest'});
+
+  const steps=scanStepDefs.slice(0,scanMode==='quick'?4:8);
+  const stepsEl=document.getElementById('progressSteps');
+  stepsEl.innerHTML=steps.map((_,i)=>`
+    <div class="step-row" id="step${i}">
+      <div class="step-icon" id="sicon${i}">${steps[i].icon}</div>
+      <div><div class="step-label">${steps[i].label}</div><div class="step-sub">${steps[i].sub}</div></div>
+      <div class="step-status" id="sstatus${i}">Waiting…</div>
+    </div>`).join('');
+
+  let i=0;
+  const bar=document.getElementById('progressBar');
+  const pct=document.getElementById('progressPct');
+  function doStep(){
+    if(i>0){
+      document.getElementById('step'+(i-1)).classList.remove('active');
+      document.getElementById('step'+(i-1)).classList.add('done');
+      document.getElementById('sicon'+(i-1)).textContent='✅';
+      document.getElementById('sstatus'+(i-1)).textContent='Done';
+    }
+    if(i>=steps.length){
+      const p=Math.round((i/steps.length)*100);
+      bar.style.width=p+'%';pct.textContent=p+'%';
+      const result=performScan(url);
+      setTimeout(()=>{
+        prog.style.display='none';
+        showResults(result);
+        logActivity(url,result);
+        updateStats(result);
+      },300);
+      return;
+    }
+    document.getElementById('step'+i).classList.add('active');
+    document.getElementById('sstatus'+i).textContent='Scanning…';
+    const p=Math.round((i/steps.length)*100);
+    bar.style.width=p+'%';pct.textContent=p+'%';
+    i++;
+    const delay=scanMode==='quick'?200+Math.random()*150:250+Math.random()*200;
+    setTimeout(doStep,delay);
+  }
+  doStep();
+}
+
+function performScan(link){
+  try{
+    const url=new URL(link);
+    const dom=url.hostname.toLowerCase();
+    const path=url.pathname.toLowerCase();
+    const full=link.toLowerCase();
+    const r={link,domain:dom,score:100,threats:[],warnings:[],info:[],platform:'Unknown',checks:{}};
+    r.checks.domain=chkDomain(dom,r);
+    r.checks.shortener=chkShortener(dom,r);
+    r.checks.malicious=chkMalicious(dom,r);
+    r.checks.patterns=chkPatterns(full,r);
+    r.checks.https=chkHttps(url.protocol,r);
+    r.checks.platform=chkPlatform(dom,path,r);
+    r.checks.ip=chkIP(dom,r);
+    r.checks.path=chkPath(path,r);
+    r.checks.subdomain=chkSubdomain(dom,r);
+    r.checks.fileType=chkFile(path,r);
+    r.riskLevel=calcRisk(r.score);
+    r.recs=genRecs(r);
+    return r;
+  }catch(e){return{error:true,message:'Invalid URL format',link};}
+}
+
+function chkDomain(d,r){for(const[k,v]of Object.entries(DB.safe)){if(d.includes(k)){r.platform=v.p;r.info.push('Trusted domain: '+v.p);return{s:'pass',m:v.p+' verified'};}}r.warnings.push('Domain not in trusted list');r.score-=18;return{s:'warn',m:'Unknown domain'};}
+function chkShortener(d,r){const s=DB.short.find(x=>d.includes(x));if(s){r.threats.push('URL shortener detected: '+s);r.score-=30;return{s:'fail',m:'Shortener '+s};}return{s:'pass',m:'No shortener'};}
+function chkMalicious(d,r){const m=DB.bad.find(x=>d.includes(x));if(m){r.threats.push('🚨 KNOWN MALICIOUS DOMAIN: '+m);r.score-=50;return{s:'fail',m:'Known malicious'};}return{s:'pass',m:'Clean domain'};}
+function chkPatterns(f,r){const found=DB.patterns.filter(p=>f.includes(p));if(found.length){found.forEach(p=>r.warnings.push('Suspicious keyword: "'+p+'"'));r.score-=found.length*8;return{s:'warn',m:found.length+' patterns found'};}return{s:'pass',m:'No suspicious patterns'};}
+function chkHttps(p,r){if(p!=='https:'){r.threats.push('Insecure HTTP protocol');r.score-=25;return{s:'fail',m:'HTTP (insecure)'};}return{s:'pass',m:'HTTPS secure'};}
+function chkPlatform(d,p,r){if(d.includes('zoom')&&(p.includes('/j/')||p.includes('/s/'))){r.info.push('Valid Zoom meeting format');return{s:'pass',m:'Zoom meeting'};}if(d.includes('sharepoint')||d.includes('onedrive')){r.info.push('SharePoint/OneDrive detected');return{s:'pass',m:'SharePoint'};}if(d.includes('dropbox')){return{s:'pass',m:'Dropbox'};}if(d.includes('meet.google')){return{s:'pass',m:'Google Meet'};}if(d.includes('teams.microsoft')){return{s:'pass',m:'Teams'};}return{s:'info',m:'Generic link'};}
+function chkIP(d,r){if(/^(\d{1,3}\.){3}\d{1,3}$/.test(d)){r.threats.push('IP address used as domain');r.score-=28;return{s:'fail',m:'IP address'};}return{s:'pass',m:'Domain name'};}
+function chkPath(p,r){if(p.includes('..')||p.includes('%2e%2e')){r.threats.push('Path traversal detected');r.score-=35;return{s:'fail',m:'Path traversal'};}return{s:'pass',m:'Clean path'};}
+function chkSubdomain(d,r){const n=d.split('.').length-2;if(n>3){r.warnings.push('Excessive subdomain depth ('+n+')');r.score-=12;return{s:'warn',m:n+' subdomains'};}return{s:'pass',m:'Normal subdomain'};}
+function chkFile(p,r){const ext=p.split('.').pop();if(ext&&['exe','msi','bat','cmd','scr','vbs','js','jar'].includes(ext)){r.warnings.push('Executable extension: .'+ext);r.score-=20;return{s:'warn',m:'Executable .'+ext};}return{s:'pass',m:'Safe extension'};}
+function calcRisk(s){if(s>=80)return'LOW';if(s>=50)return'MEDIUM';if(s>=25)return'HIGH';return'CRITICAL';}
+function genRecs(r){const a=[];if(r.riskLevel==='HIGH'||r.riskLevel==='CRITICAL'){a.push('❌ DO NOT open this link');a.push('🚨 Report to SIRA security immediately');a.push('🔒 Verify with sender via separate channel');}else if(r.riskLevel==='MEDIUM'){a.push('⚠️ Verify with sender before opening');a.push('🔍 Double-check domain spelling carefully');}else{a.push('✅ Link appears safe — stay vigilant');a.push('📋 Follow SIRA security guidelines');}return a;}
+
+function showResults(res){
+  const card=document.getElementById('resultsCard');
+  card.style.display='block';
+  if(res.error){card.innerHTML=`<div style="padding:40px;text-align:center;font-size:40px;">❌<h3 style="color:var(--danger);margin-top:12px;">${res.message}</h3></div>`;return;}
+
+  lastResult=res;
+  const scoreClass=res.riskLevel.toLowerCase();
+  const meterW=res.riskLevel==='LOW'?res.score:res.riskLevel==='MEDIUM'?55:92;
+
+  let checks='';
+  for(const[k,v]of Object.entries(res.checks)){
+    const ico=v.s==='pass'?'✅':v.s==='warn'?'⚠️':'❌';
+    const label=k.replace(/([A-Z])/g,' $1').replace(/^./,s=>s.toUpperCase());
+    checks+=`<div class="check-item ${v.s}">
+      <div class="check-dot ${v.s}">${ico}</div>
+      <div><div class="check-name">${label}</div><div class="check-msg">${v.m}</div></div>
+    </div>`;
+  }
+
+  const threatsHtml=res.threats.length?`<div class="threats-block critical"><h4>🚨 Critical Threats (${res.threats.length})</h4><ul>${res.threats.map(t=>`<li>${t}</li>`).join('')}</ul></div>`:'';
+  const warnsHtml=res.warnings.length?`<div class="threats-block warning"><h4>⚠️ Warnings (${res.warnings.length})</h4><ul>${res.warnings.map(w=>`<li>${w}</li>`).join('')}</ul></div>`:'';
+  const infoHtml=res.info.length?`<div class="threats-block info"><h4>ℹ️ Info</h4><ul>${res.info.map(i=>`<li>${i}</li>`).join('')}</ul></div>`:'';
+
+  card.innerHTML=`
+    <div class="results-head">
+      <h2>📊 Scan Results <span style="font-size:13px;color:var(--text2);font-weight:400;">· ${new Date().toLocaleTimeString()}</span></h2>
+      <div class="verdict ${res.riskLevel}">${res.riskLevel==='LOW'?'✅ SAFE':res.riskLevel==='MEDIUM'?'⚠️ CAUTION':'🚨 UNSAFE'} · ${res.riskLevel}</div>
+    </div>
+    <div class="score-block">
+      <div class="score-head">
+        <span class="score-label">Security Score</span>
+        <span class="score-num" id="scoreAnim">0</span>
+      </div>
+      <div class="score-track"><div class="score-fill ${scoreClass}" id="scoreBar"></div></div>
+    </div>
+    <div class="details-grid">
+      <div class="detail-box"><div class="d-label">Platform</div><div class="d-val">${res.platform}</div></div>
+      <div class="detail-box"><div class="d-label">Domain</div><div class="d-val">${res.domain}</div></div>
+      <div class="detail-box"><div class="d-label">Protocol</div><div class="d-val">${res.link.startsWith('https')?'HTTPS ✅':'HTTP ❌'}</div></div>
+      <div class="detail-box"><div class="d-label">Risk Level</div><div class="d-val">${res.riskLevel}</div></div>
+    </div>
+    ${threatsHtml}${warnsHtml}${infoHtml}
+    <div class="checks-section"><h3>✓ Security Checks</h3>${checks}</div>
+    <div class="recs-block"><h4>📋 SIRA Recommendations</h4><ul>${res.recs.map(r=>`<li>${r}</li>`).join('')}</ul></div>
+    <div class="export-bar">
+      <button class="exp-btn" onclick="exportPDF()">📄 PDF Report</button>
+      <button class="exp-btn" onclick="exportJSON()">📊 JSON Export</button>
+      <button class="exp-btn danger" onclick="showToast('🚨 Reported to SIRA security team')">🚨 Report Threat</button>
+    </div>
+  `;
+  card.scrollIntoView({behavior:'smooth',block:'nearest'});
+
+  // Animate score counter
+  let n=0;const target=res.score;const dur=800;const step=target/dur*16;
+  const anim=()=>{n=Math.min(n+step,target);document.getElementById('scoreAnim').textContent=Math.round(n)+'/100';if(n<target)requestAnimationFrame(anim);}
+  requestAnimationFrame(anim);
+  setTimeout(()=>{document.getElementById('scoreBar').style.width=Math.round(meterW)+'%';},100);
+}
+
+function logActivity(url,res){
+  actLog.unshift({t:new Date().toLocaleTimeString(),link:(url.substring(0,42)+'…'),risk:res.error?'info':res.riskLevel,plat:res.platform||''});
+  renderLog();
+}
+function renderLog(){
+  const el=document.getElementById('activityLog');
+  el.innerHTML=actLog.slice(0,15).map(e=>`
+    <div class="log-row">
+      <span class="log-time">${e.t}</span>
+      <span class="log-dot ${e.risk}"></span>
+      <span class="log-link">${e.link}</span>
+      <span class="log-badge ${e.risk}">${e.risk}</span>
+    </div>`).join('');
+}
+
+function updateStats(res){
+  if(res.error)return;
+}
+
+function resetScanner(){
+  document.getElementById('urlInput').value='';
+  document.getElementById('resultsCard').style.display='none';
+  document.getElementById('scanProgress').style.display='none';
+}
+
+function switchTab(name,btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(name+'Pane').classList.add('active');
+  if(name==='community')renderComments(commentFilter);
+}
+
+function toggleTheme(){
+  const html=document.documentElement;
+  html.setAttribute('data-theme',html.getAttribute('data-theme')==='dark'?'light':'dark');
+}
+
+// ── PDF EXPORT ──
+function exportPDF(){
+  if(!lastResult){showToast('⚠️ Run a scan first');return;}
+  try{
+    const{jsPDF}=window.jspdf;
+    const doc=new jsPDF();
+    doc.setFillColor(30,58,138);
+    doc.rect(0,0,210,30,'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(18);doc.setFont('helvetica','bold');
+    doc.text('SIRA LINK SCANNER — SCAN REPORT',14,19);
+    doc.setFontSize(9);doc.setFont('helvetica','normal');
+    doc.text('Enterprise Security Report · '+new Date().toLocaleString(),14,26);
+
+    doc.setTextColor(0,0,0);
+    doc.setFontSize(13);doc.setFont('helvetica','bold');
+    doc.text('Verdict: '+lastResult.riskLevel+' RISK',14,44);
+    doc.setFontSize(11);doc.setFont('helvetica','normal');
+    doc.text('Security Score: '+lastResult.score+'/100',14,52);
+    doc.text('Platform: '+lastResult.platform,14,60);
+    doc.text('Domain: '+lastResult.domain,14,68);
+    doc.text('URL: '+(lastResult.link.substring(0,70)),14,76);
+    doc.text('Scanned: '+new Date().toLocaleString(),14,84);
+
+    if(lastResult.threats.length){
+      doc.setFontSize(12);doc.setFont('helvetica','bold');doc.setTextColor(180,0,0);
+      doc.text('Critical Threats:',14,96);
+      doc.setTextColor(0,0,0);doc.setFont('helvetica','normal');doc.setFontSize(10);
+      lastResult.threats.forEach((t,i)=>doc.text('• '+t,18,104+i*8));
+    }
+
+    doc.setFontSize(12);doc.setFont('helvetica','bold');doc.setTextColor(0,0,0);
+    let y=(lastResult.threats.length>0?104+lastResult.threats.length*8:96)+10;
+    doc.text('Recommendations:',14,y);
+    doc.setFont('helvetica','normal');doc.setFontSize(10);
+    lastResult.recs.forEach((r,i)=>{doc.text('• '+r,18,y+8+i*8);});
+
+    doc.setFontSize(8);doc.setTextColor(120,120,120);
+    doc.text('SIRA Enterprise Security · Confidential · '+new Date().toLocaleDateString(),14,285);
+    doc.save('SIRA-Scan-Report-'+Date.now()+'.pdf');
+    showToast('✅ PDF report downloaded!');
+  }catch(e){showToast('❌ PDF generation failed — try again');}
+}
+
+function exportJSON(){
+  if(!lastResult){showToast('⚠️ Run a scan first');return;}
+  const blob=new Blob([JSON.stringify(lastResult,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='sira-scan-'+Date.now()+'.json';a.click();
+  showToast('✅ JSON exported!');
+}
+
+// ── COMMENTS ──
+let curRat=0;
+const avatarColors=['#1e3a8a','#10b981','#ef4444','#f59e0b','#7c3aed','#0891b2','#e11d48'];
+let comments=[
+  {id:1,name:'Sarah K.',dept:'IT Security',topic:'Phishing',text:'Caught a fake SharePoint link last week — SIRA flagged it as HIGH risk instantly. Saved our whole finance team from a credential harvest. The suspicious pattern check is spot on.',stars:5,time:'2 days ago',likes:14,liked:false,pinned:true},
+  {id:2,name:'David R.',dept:'Engineering',topic:'Feature',text:'Would love a browser extension so I can right-click any link and scan it without switching tabs. Deep scan breakdown is excellent — very clear for non-technical staff too.',stars:4,time:'5 days ago',likes:8,liked:false,pinned:false},
+  {id:3,name:'Priya N.',dept:'Operations',topic:'Tip',text:'Pro tip: always paste bit.ly and tinyurl links here before opening. SIRA expands them and scans the actual destination. Found two malware redirects this month alone.',stars:5,time:'1 week ago',likes:22,liked:false,pinned:false}
+];
+
+function initials(n){return n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);}
+function avColor(n){let h=0;for(let c of n)h=(h*31+c.charCodeAt(0))%avatarColors.length;return avatarColors[h];}
+function stars(n){return'★'.repeat(n)+'☆'.repeat(5-n);}
+
+function setRating(n){
+  curRat=n;
+  document.querySelectorAll('.star-btn2').forEach((b,i)=>b.classList.toggle('lit',i<n));
+}
+function updateCC(){
+  const l=document.getElementById('cfText').value.length;
+  document.getElementById('cc').textContent=l+' / 500';
+}
+function fFilter(t,el){
+  commentFilter=t;
+  document.querySelectorAll('.fchip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  renderComments(t);
+}
+function renderComments(f){
+  const list=document.getElementById('commentList');
+  if(!list)return;
+  const filtered=f==='All'?comments:comments.filter(c=>c.topic===f);
+  if(!filtered.length){
+    list.innerHTML=`<div class="empty-state"><div class="big">💬</div>No comments in this category yet. Be the first!</div>`;
+    return;
+  }
+  list.innerHTML=filtered.map(c=>`
+    <div class="cmt-card${c.pinned?' pinned':''}">
+      <div class="cmt-top">
+        <div class="cmt-author">
+          <div class="avatar" style="background:${avColor(c.name)}">${initials(c.name)}</div>
+          <div>
+            <div class="auth-name">${c.name}${c.pinned?' <span class="pin-tag">📌 Pinned</span>':''}</div>
+            <div class="auth-role">${c.dept}</div>
+          </div>
+        </div>
+        <div class="cmt-meta">
+          <span class="cmt-stars">${stars(c.stars)}</span>
+          <span class="cmt-time">${c.time}</span>
+        </div>
+      </div>
+      <p class="cmt-text">${c.text}</p>
+      <span class="cmt-tag">${c.topic}</span>
+      <div class="cmt-actions">
+        <button class="act-btn${c.liked?' liked':''}" onclick="toggleLike(${c.id})">
+          ${c.liked?'❤️':'🤍'} <span>${c.likes}</span>
+        </button>
+        <button class="act-btn" onclick="replyTo('${c.name}')">↩ Reply</button>
+      </div>
+    </div>`).join('');
+}
+function toggleLike(id){
+  const c=comments.find(x=>x.id===id);if(!c)return;
+  c.liked=!c.liked;c.likes+=c.liked?1:-1;
+  renderComments(commentFilter);
+}
+function replyTo(name){
+  const ta=document.getElementById('cfText');
+  ta.value='@'+name+' ';ta.focus();updateCC();
+  document.querySelector('.comment-form-box').scrollIntoView({behavior:'smooth',block:'center'});
+}
+function postComment(){
+  const name=document.getElementById('cfName').value.trim();
+  const text=document.getElementById('cfText').value.trim();
+  if(!name){showToast('⚠️ Please enter your name');return;}
+  if(text.length<10){showToast('⚠️ Comment must be at least 10 characters');return;}
+  comments.unshift({id:Date.now(),name,dept:document.getElementById('cfDept').value||'Team Member',
+    topic:document.getElementById('cfTopic').value,text,stars:curRat||5,
+    time:'just now',likes:0,liked:false,pinned:false});
+  document.getElementById('cfName').value='';
+  document.getElementById('cfText').value='';
+  curRat=0;setRating(0);updateCC();
+  commentFilter='All';
+  document.querySelectorAll('.fchip').forEach((c,i)=>c.classList.toggle('active',i===0));
+  renderComments('All');
+  document.getElementById('commentsBadgeMain').textContent=comments.length+' comments';
+  document.getElementById('cBadge').textContent=comments.length;
+  showToast('✅ Comment posted — thanks!');
+}
+
+// ── TOAST ──
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+// ── INIT ──
+window.addEventListener('load',()=>{
+  loadSample('sharepoint');
+});
+</script>
+</body>
+</html>
